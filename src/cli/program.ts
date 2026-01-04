@@ -32,14 +32,14 @@ export function buildProgram() {
     "Send, receive, and auto-reply on WhatsApp via Baileys.";
 
   program
-    .name("warelay")
+    .name("klaus")
     .description("WhatsApp relay CLI (via Baileys)")
     .version(PROGRAM_VERSION);
 
   const formatIntroLine = (version: string, rich = true) => {
-    const base = `📡 warelay ${version} — ${TAGLINE}`;
+    const base = `📡 klaus ${version} — ${TAGLINE}`;
     return rich && chalk.level > 0
-      ? `${chalk.bold.cyan("📡 warelay")} ${chalk.white(version)} ${chalk.gray("—")} ${chalk.green(TAGLINE)}`
+      ? `${chalk.bold.cyan("📡 klaus")} ${chalk.white(version)} ${chalk.gray("—")} ${chalk.green(TAGLINE)}`
       : base;
   };
 
@@ -68,19 +68,19 @@ export function buildProgram() {
   program.addHelpText("beforeAll", `\n${formatIntroLine(PROGRAM_VERSION)}\n`);
   const examples = [
     [
-      "warelay login",
+      "klaus login",
       "Link your WhatsApp account via QR code.",
     ],
     [
-      'warelay send --to +15551234567 --message "Hi" --json',
+      'klaus send --to +15551234567 --message "Hi" --json',
       "Send via WhatsApp Web and print JSON result.",
     ],
     [
-      "warelay relay --verbose",
+      "klaus relay --verbose",
       "Auto-reply loop: listen for incoming messages.",
     ],
     [
-      "warelay status --limit 10 --json",
+      "klaus status --limit 10 --json",
       "Show last 10 messages as JSON.",
     ],
   ] as const;
@@ -103,9 +103,9 @@ export function buildProgram() {
       "after",
       `
 Examples:
-  warelay login                       # scan QR to link WhatsApp
-  warelay login --phone +1234567890   # use pairing code (easier on servers)
-  warelay login --verbose             # with detailed connection logs`,
+  klaus login                       # scan QR to link WhatsApp
+  klaus login --phone +1234567890   # use pairing code (easier on servers)
+  klaus login --verbose             # with detailed connection logs`,
     )
     .action(async (opts) => {
       setVerbose(Boolean(opts.verbose));
@@ -125,8 +125,8 @@ Examples:
       "after",
       `
 Examples:
-  warelay logout               # clear credentials (with confirmation)
-  warelay logout --yes         # clear without prompting`,
+  klaus logout               # clear credentials (with confirmation)
+  klaus logout --yes         # clear without prompting`,
     )
     .action(async (opts) => {
       const hasAuth = await webAuthExists();
@@ -169,9 +169,9 @@ Examples:
       "after",
       `
 Examples:
-  warelay send --to +15551234567 --message "Hi"
-  warelay send --to +15551234567 --message "Hi" --dry-run      # print payload only
-  warelay send --to +15551234567 --message "Look!" --media ./photo.jpg`,
+  klaus send --to +15551234567 --message "Hi"
+  klaus send --to +15551234567 --message "Hi" --dry-run      # print payload only
+  klaus send --to +15551234567 --message "Look!" --media ./photo.jpg`,
     )
     .action(async (opts) => {
       setVerbose(Boolean(opts.verbose));
@@ -210,12 +210,12 @@ Examples:
       "after",
       `
 Examples:
-  warelay heartbeat                 # uses first allowFrom contact
-  warelay heartbeat --verbose       # prints detailed heartbeat logs
-  warelay heartbeat --to +1555123   # override destination
-  warelay heartbeat --session-id <uuid> --to +1555123   # resume a specific session
-  warelay heartbeat --message "Ping"
-  warelay heartbeat --all           # send to every active session recipient or allowFrom entry`,
+  klaus heartbeat                 # uses first allowFrom contact
+  klaus heartbeat --verbose       # prints detailed heartbeat logs
+  klaus heartbeat --to +1555123   # override destination
+  klaus heartbeat --session-id <uuid> --to +1555123   # resume a specific session
+  klaus heartbeat --message "Ping"
+  klaus heartbeat --all           # send to every active session recipient or allowFrom entry`,
     )
     .action(async (opts) => {
       setVerbose(Boolean(opts.verbose));
@@ -296,9 +296,9 @@ Examples:
       "after",
       `
 Examples:
-  warelay relay                     # listen for incoming messages
-  warelay relay --verbose           # with detailed logging
-  warelay relay --heartbeat-now     # immediate heartbeat on start
+  klaus relay                     # listen for incoming messages
+  klaus relay --verbose           # with detailed logging
+  klaus relay --heartbeat-now     # immediate heartbeat on start
 `,
     )
     .action(async (opts) => {
@@ -454,9 +454,9 @@ Examples:
       "after",
       `
 Examples:
-  warelay status                            # last 20 msgs
-  warelay status --limit 5                  # last 5 msgs
-  warelay status --json --limit 50          # machine-readable output`,
+  klaus status                            # last 20 msgs
+  klaus status --limit 5                  # last 5 msgs
+  klaus status --json --limit 50          # machine-readable output`,
     )
     .action(async (opts) => {
       setVerbose(Boolean(opts.verbose));
@@ -472,20 +472,20 @@ Examples:
   program
     .command("relay:tmux")
     .description(
-      "Run relay --verbose inside tmux (session warelay-relay), restarting if already running, then attach",
+      "Run relay --verbose inside tmux (session klaus-relay), restarting if already running, then attach",
     )
     .action(async () => {
       try {
         const shouldAttach = Boolean(process.stdout.isTTY);
         const session = await spawnRelayTmux(
-          "pnpm warelay relay --verbose",
+          "pnpm klaus relay --verbose",
           shouldAttach,
         );
         defaultRuntime.log(
           info(
             shouldAttach
-              ? `tmux session started and attached: ${session} (pane running "pnpm warelay relay --verbose")`
-              : `tmux session started: ${session} (pane running "pnpm warelay relay --verbose"); attach manually with "tmux attach -t ${session}"`,
+              ? `tmux session started and attached: ${session} (pane running "pnpm klaus relay --verbose")`
+              : `tmux session started: ${session} (pane running "pnpm klaus relay --verbose"); attach manually with "tmux attach -t ${session}"`,
           ),
         );
       } catch (err) {
@@ -499,24 +499,24 @@ Examples:
   program
     .command("relay:tmux:attach")
     .description(
-      "Attach to the existing warelay-relay tmux session (no restart)",
+      "Attach to the existing klaus-relay tmux session (no restart)",
     )
     .action(async () => {
       try {
         if (!process.stdout.isTTY) {
           defaultRuntime.error(
             danger(
-              "Cannot attach: stdout is not a TTY. Run this in a terminal or use 'tmux attach -t warelay-relay' manually.",
+              "Cannot attach: stdout is not a TTY. Run this in a terminal or use 'tmux attach -t klaus-relay' manually.",
             ),
           );
           defaultRuntime.exit(1);
           return;
         }
-        await spawnRelayTmux("pnpm warelay relay --verbose", true, false);
-        defaultRuntime.log(info("Attached to warelay-relay session."));
+        await spawnRelayTmux("pnpm klaus relay --verbose", true, false);
+        defaultRuntime.log(info("Attached to klaus-relay session."));
       } catch (err) {
         defaultRuntime.error(
-          danger(`Failed to attach to warelay-relay: ${String(err)}`),
+          danger(`Failed to attach to klaus-relay: ${String(err)}`),
         );
         defaultRuntime.exit(1);
       }
@@ -525,20 +525,20 @@ Examples:
   program
     .command("relay:heartbeat:tmux")
     .description(
-      "Run relay --verbose with an immediate heartbeat inside tmux (session warelay-relay), then attach",
+      "Run relay --verbose with an immediate heartbeat inside tmux (session klaus-relay), then attach",
     )
     .action(async () => {
       try {
         const shouldAttach = Boolean(process.stdout.isTTY);
         const session = await spawnRelayTmux(
-          "pnpm warelay relay --verbose --heartbeat-now",
+          "pnpm klaus relay --verbose --heartbeat-now",
           shouldAttach,
         );
         defaultRuntime.log(
           info(
             shouldAttach
-              ? `tmux session started and attached: ${session} (pane running "pnpm warelay relay --verbose --heartbeat-now")`
-              : `tmux session started: ${session} (pane running "pnpm warelay relay --verbose --heartbeat-now"); attach manually with "tmux attach -t ${session}"`,
+              ? `tmux session started and attached: ${session} (pane running "pnpm klaus relay --verbose --heartbeat-now")`
+              : `tmux session started: ${session} (pane running "pnpm klaus relay --verbose --heartbeat-now"); attach manually with "tmux attach -t ${session}"`,
           ),
         );
       } catch (err) {
@@ -546,6 +546,42 @@ Examples:
           danger(
             `Failed to start relay tmux session with heartbeat: ${String(err)}`,
           ),
+        );
+        defaultRuntime.exit(1);
+      }
+    });
+
+  program
+    .command("admin")
+    .description("Start the admin web console")
+    .option("-p, --port <number>", "Port to listen on", "3847")
+    .option("--host <address>", "Host to bind to (default: 127.0.0.1)", "127.0.0.1")
+    .option("--read-only", "Run in read-only mode (no modifications)", false)
+    .addHelpText(
+      "after",
+      `
+Examples:
+  klaus admin                    # start admin on http://127.0.0.1:3847
+  klaus admin --port 8080        # use custom port
+  klaus admin --read-only        # browse configs without editing`,
+    )
+    .action(async (opts) => {
+      const port = Number.parseInt(String(opts.port), 10);
+      if (Number.isNaN(port) || port < 1 || port > 65535) {
+        defaultRuntime.error(danger("Invalid port number"));
+        defaultRuntime.exit(1);
+        return;
+      }
+
+      try {
+        const { startAdminServer } = await import("../admin/index.js");
+        defaultRuntime.log(info("Starting admin console..."));
+        await startAdminServer(port, opts.host, Boolean(opts.readOnly));
+
+        await new Promise(() => {});
+      } catch (err) {
+        defaultRuntime.error(
+          danger(`Failed to start admin console: ${String(err)}`),
         );
         defaultRuntime.exit(1);
       }

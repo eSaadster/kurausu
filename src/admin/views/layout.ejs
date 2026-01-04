@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Warelay Admin' %></title>
+  <link rel="stylesheet" href="/admin/static/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+  <div class="layout">
+    <%- include('partials/nav', { currentPath: currentPath || '/', sessions: sessions || [] }) %>
+
+    <main class="main">
+      <header class="page-header">
+        <h1 class="page-title"><%= title || 'Dashboard' %></h1>
+        <div class="header-actions">
+          <% if (typeof showReload !== 'undefined' && showReload) { %>
+          <button
+            class="btn btn-primary"
+            hx-post="/admin/reload"
+            hx-swap="none"
+            hx-indicator="#reload-indicator"
+          >
+            <span class="htmx-indicator spinner" id="reload-indicator"></span>
+            Reload Config
+          </button>
+          <% } %>
+        </div>
+      </header>
+
+      <div id="alerts">
+        <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success"><%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error"><%= error %></div>
+        <% } %>
+      </div>
+
+      <div id="content">
+        <%- body %>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Auto-dismiss alerts after 5 seconds
+    document.querySelectorAll('.alert').forEach(alert => {
+      setTimeout(() => {
+        alert.style.transition = 'opacity 0.3s';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 300);
+      }, 5000);
+    });
+
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabGroup = tab.closest('.tabs');
+        const contentId = tab.dataset.tab;
+
+        // Deactivate all tabs and content
+        tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        // Activate clicked tab and content
+        tab.classList.add('active');
+        document.getElementById(contentId)?.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

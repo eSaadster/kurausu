@@ -1,12 +1,12 @@
-# WaRelay Setup Guide
+# Klaus Setup Guide
 
 ## Overview
 
-WaRelay is a WhatsApp relay that uses Baileys (WhatsApp Web protocol) to receive messages and auto-reply using Claude.
+Klaus is a WhatsApp relay that uses Baileys (WhatsApp Web protocol) to receive messages and auto-reply using Claude.
 
 ## Architecture
 
-WaRelay connects directly to WhatsApp Web via Baileys - no external bridge needed. It:
+Klaus connects directly to WhatsApp Web via Baileys - no external bridge needed. It:
 1. Maintains a WebSocket connection to WhatsApp
 2. Listens for incoming messages
 3. Invokes Claude CLI to generate replies
@@ -15,21 +15,19 @@ WaRelay connects directly to WhatsApp Web via Baileys - no external bridge neede
 
 ## Service
 
-- **tmux session**: `warelay-relay`
-- **directory**: `/home/clawd/warelay`
-- **command**: `npx tsx src/index.ts relay --verbose`
-- **logs**: `/tmp/warelay/warelay.log`
+- **tmux session**: `klaus-relay`
+- **command**: `klaus relay --verbose`
+- **logs**: `/tmp/klaus/klaus.log`
 
 ## Configuration
 
-### WaRelay Config (`~/.warelay/warelay.json`)
+### Klaus Config (`~/.klaus/klaus.json`)
 ```json
 {
   "inbound": {
-    "allowFrom": ["+17206598123"],
+    "allowFrom": ["+15551234567"],
     "reply": {
       "mode": "command",
-      "cwd": "/home/clawd/scratchpad",
       "command": ["claude", "--dangerously-skip-permissions", "--model", "haiku", "{{BodyStripped}}"],
       "bodyPrefix": "You are a helpful WhatsApp assistant.\n\n",
       "session": {
@@ -43,7 +41,7 @@ WaRelay connects directly to WhatsApp Web via Baileys - no external bridge neede
 }
 ```
 
-### WhatsApp Credentials (`~/.warelay/credentials/`)
+### WhatsApp Credentials (`~/.klaus/credentials/`)
 Baileys auth state stored here after login. Contains `creds.json` and signal keys.
 
 ## Commands
@@ -51,29 +49,29 @@ Baileys auth state stored here after login. Contains `creds.json` and signal key
 ### Login (link WhatsApp)
 ```bash
 # Via pairing code (easier on servers)
-npx tsx src/index.ts login --phone +923135756673 --verbose
+klaus login --phone +15551234567 --verbose
 
 # Via QR code
-npx tsx src/index.ts login --verbose
+klaus login --verbose
 ```
 
 ### Start Relay
 ```bash
 # In tmux (recommended)
-tmux new-session -d -s warelay-relay "npx tsx src/index.ts relay --verbose"
+tmux new-session -d -s klaus-relay "klaus relay --verbose"
 
 # Or via built-in tmux command
-npx tsx src/index.ts relay:tmux
+klaus relay:tmux
 ```
 
 ### Send a message
 ```bash
-npx tsx src/index.ts send --to +17206598123 --message "Hello!"
+klaus send --to +15551234567 --message "Hello!"
 ```
 
 ### Check status
 ```bash
-npx tsx src/index.ts status
+klaus status
 ```
 
 ## Monitoring
@@ -83,13 +81,13 @@ npx tsx src/index.ts status
 tmux list-sessions
 
 # View relay output
-tmux capture-pane -t warelay-relay -p -S -50
+tmux capture-pane -t klaus-relay -p -S -50
 
 # View log file
-tail -f /tmp/warelay/warelay.log
+tail -f /tmp/klaus/klaus.log
 
 # Attach to session (Ctrl+B, D to detach)
-tmux attach -t warelay-relay
+tmux attach -t klaus-relay
 ```
 
 ## Troubleshooting
@@ -97,26 +95,24 @@ tmux attach -t warelay-relay
 ### Messages not received
 1. Check connection is open: look for `Connection opened successfully!` in tmux
 2. Verify sender is in `allowFrom` list in config
-3. Check WhatsApp shows device as linked (Settings → Linked Devices)
+3. Check WhatsApp shows device as linked (Settings -> Linked Devices)
 
 ### Session logged out
 ```bash
 # Re-login
-npx tsx src/index.ts login --phone +923135756673 --verbose
+klaus login --verbose
 ```
 
 ### Restart relay
 ```bash
-tmux kill-session -t warelay-relay
-tmux new-session -d -s warelay-relay "npx tsx src/index.ts relay --verbose"
+tmux kill-session -t klaus-relay
+tmux new-session -d -s klaus-relay "klaus relay --verbose"
 ```
 
 ## Key Paths
 
 | Item | Path |
 |------|------|
-| WaRelay source | `/home/clawd/warelay/src/` |
-| WaRelay config | `~/.warelay/warelay.json` |
-| WhatsApp credentials | `~/.warelay/credentials/` |
-| WaRelay logs | `/tmp/warelay/warelay.log` |
-| Claude scratchpad | `/home/clawd/scratchpad` |
+| Klaus config | `~/.klaus/klaus.json` |
+| WhatsApp credentials | `~/.klaus/credentials/` |
+| Klaus logs | `/tmp/klaus/klaus.log` |

@@ -1,3 +1,6 @@
+import express from "express";
+import type { Server } from "node:http";
+
 import { getReplyFromConfig } from "../auto-reply/reply.js";
 import type { ReplyPayload } from "../auto-reply/types.js";
 import { waitForever } from "../cli/wait.js";
@@ -28,6 +31,7 @@ import {
 import { getWebAuthAgeMs } from "./session.js";
 
 const DEFAULT_WEB_MEDIA_BYTES = 5 * 1024 * 1024;
+export const RELAY_INTERNAL_PORT = 3847;
 type WebInboundMsg = Parameters<
   typeof monitorWebInbox
 >[0]["onMessage"] extends (msg: infer M) => unknown
@@ -572,9 +576,55 @@ export async function monitorWebProvider(
       },
     });
 
+    const internalApp = express();
+    internalApp.use(express.json());
+    let internalServer: Server | null = null;
+
+    internalApp.post("/send", async (req, res) => {
+      try {
+        const { sessionName, message } = req.body ?? {};
+        if (!sessionName || !message) {
+          res.status(400).json({ error: "sessionName and message required" });
+          return;
+        }
+
+        let jid: string;
+        if (sessionName.startsWith("@")) {
+          jid = `+${sessionName.slice(1)}`;
+        } else if (sessionName.startsWith("#")) {
+          res.status(400).json({ error: "Group sessions are not supported" });
+          return;
+        } else {
+          jid = sessionName;
+        }
+
+        const result = await listener.sendMessage(jid, message);
+        res.json({
+          success: true,
+          messageId: result?.key?.id ?? "unknown",
+          jid,
+        });
+      } catch (err) {
+        console.error("[internal-send] Error:", err);
+        res.status(500).json({ error: String(err) });
+      }
+    });
+
+    internalServer = internalApp.listen(RELAY_INTERNAL_PORT, "127.0.0.1", () => {
+      console.log(
+        success(
+          `[internal] Send endpoint listening on http://127.0.0.1:${RELAY_INTERNAL_PORT}/send`,
+        ),
+      );
+    });
+
     const closeListener = async () => {
       if (heartbeat) clearInterval(heartbeat);
       if (replyHeartbeatTimer) clearInterval(replyHeartbeatTimer);
+      if (internalServer) {
+        internalServer.close();
+        internalServer = null;
+      }
       try {
         await listener.close();
       } catch (err) {
@@ -829,7 +879,7 @@ export async function monitorWebProvider(
     if (loggedOut) {
       runtime.error(
         danger(
-          "WhatsApp session logged out. Run `warelay login --provider web` to relink.",
+          "WhatsApp session logged out. Run `klaus login` to relink.",
         ),
       );
       await closeListener();

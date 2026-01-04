@@ -1,0 +1,430 @@
+<div class="card">
+  <p class="form-help">Path: <code><%= sessionPath %></code></p>
+  <% if (sessionConfig.sharedContext) { %>
+  <p class="form-help" style="margin-top: var(--space-xs);">
+    <span class="badge badge-info">Inherits from: <%= sessionConfig.sharedContext %></span>
+  </p>
+  <% } %>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tab-env">Environment</button>
+    <button class="tab" data-tab="tab-system">System Prompt</button>
+    <button class="tab" data-tab="tab-mcp">MCP Servers</button>
+    <button class="tab" data-tab="tab-clicks">Clicks</button>
+    <button class="tab" data-tab="tab-config">Config</button>
+    <button class="tab" data-tab="tab-watchers">Watchers</button>
+    <button class="tab" data-tab="tab-skills">Skills</button>
+    <button class="tab" data-tab="tab-memory">Memory</button>
+    <button class="tab" data-tab="tab-history">History</button>
+    <button class="tab" data-tab="tab-files">Files</button>
+  </div>
+
+  <!-- Environment Variables Tab -->
+  <div id="tab-env" class="tab-content active">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/env" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">Environment Variables (.env)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 200px;"
+          placeholder="PI_AGENT_MODEL=claude-haiku-4-5&#10;COMPOSIO_API_KEY=xxx"
+        ><% Object.entries(envVars).forEach(([key, value]) => { %><%= key %>=<%= value %>
+<% }) %></textarea>
+        <p class="form-help">One variable per line in KEY=VALUE format</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save Environment</button>
+    </form>
+
+    <div style="margin-top: var(--space-lg);">
+      <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Common Variables</h3>
+      <table class="table" style="font-size: 0.875rem;">
+        <tr><td><code>PI_AGENT_MODEL</code></td><td>Override default AI model</td></tr>
+        <tr><td><code>PI_MODE</code></td><td>Agent mode (reasoning, etc.)</td></tr>
+        <tr><td><code>PI_THINKING_LEVEL</code></td><td>Thinking level (off/minimal/low/medium/high)</td></tr>
+        <tr><td><code>COMPOSIO_API_KEY</code></td><td>Composio API key for MCP tools</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- System Prompt Tab -->
+  <div id="tab-system" class="tab-content">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/system" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">System Prompt (SYSTEM.md)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 300px;"
+          placeholder="You are Klaus, a helpful AI assistant..."
+        ><%= systemContent %></textarea>
+        <p class="form-help">Markdown format. Defines the AI agent's personality and behavior for this session.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save System Prompt</button>
+    </form>
+  </div>
+
+  <!-- MCP Servers Tab -->
+  <div id="tab-mcp" class="tab-content">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/mcporter" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">MCP Servers (mcporter.json)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 300px;"
+        ><%= JSON.stringify(mcporterConfig, null, 2) %></textarea>
+        <p class="form-help">Configure Model Context Protocol servers for this session.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save MCP Config</button>
+    </form>
+
+    <details style="margin-top: var(--space-lg);">
+      <summary style="cursor: pointer;">Example Configuration</summary>
+      <pre style="margin-top: var(--space-sm);"><code>{
+  "mcpServers": {
+    "twitter": {
+      "baseUrl": "https://backend.composio.dev/v3/mcp/.../mcp",
+      "headers": {
+        "x-api-key": "${COMPOSIO_API_KEY}"
+      }
+    }
+  }
+}</code></pre>
+    </details>
+  </div>
+
+  <!-- Clicks Tab -->
+  <div id="tab-clicks" class="tab-content">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/clicks" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">Clicks Configuration (clicks.json)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 300px;"
+        ><%= JSON.stringify(clicksConfig, null, 2) %></textarea>
+        <p class="form-help">Scheduled automated tasks for this session.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save Clicks Config</button>
+    </form>
+
+    <% if (clicksConfig.clicks && clicksConfig.clicks.length > 0) { %>
+    <div style="margin-top: var(--space-lg);">
+      <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Configured Clicks</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Interval</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% clicksConfig.clicks.forEach(click => { %>
+          <tr>
+            <td><code><%= click.id %></code></td>
+            <td><%= click.name %></td>
+            <td><%= click.intervalMinutes %> min</td>
+            <td>
+              <% if (click.enabled !== false) { %>
+              <span class="badge badge-success">Enabled</span>
+              <% } else { %>
+              <span class="badge badge-default">Disabled</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <details style="margin-top: var(--space-lg);">
+      <summary style="cursor: pointer;">Example Click Configuration</summary>
+      <pre style="margin-top: var(--space-sm);"><code>{
+  "clicks": [
+    {
+      "id": "twitter-monitor",
+      "name": "Twitter Mentions",
+      "instructions": "Check for new mentions...",
+      "intervalMinutes": 60,
+      "enabled": true,
+      "model": "claude-haiku-4-5",
+      "useClickMemory": true
+    }
+  ],
+  "alertChannel": "17206598123"
+}</code></pre>
+    </details>
+  </div>
+
+  <!-- Config Tab -->
+  <div id="tab-config" class="tab-content">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/config" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">Session Config (config.json)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 150px;"
+        ><%= JSON.stringify(sessionConfig, null, 2) %></textarea>
+        <p class="form-help">Session metadata like shared context references.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save Config</button>
+    </form>
+
+    <details style="margin-top: var(--space-lg);">
+      <summary style="cursor: pointer;">Example Configuration</summary>
+      <pre style="margin-top: var(--space-sm);"><code>{
+  "sharedContext": "@17206598123"
+}</code></pre>
+      <p class="form-help">Use sharedContext to inherit SYSTEM.md and skills from another session.</p>
+    </details>
+  </div>
+
+  <!-- Watchers Tab -->
+  <div id="tab-watchers" class="tab-content">
+    <form hx-post="/admin/sessions/<%= encodeURIComponent(sessionName) %>/watchers" hx-swap="none">
+      <div class="form-group">
+        <label class="form-label">Watchers Config (watchers.json)</label>
+        <textarea
+          name="content"
+          class="form-textarea"
+          style="min-height: 300px; font-family: monospace;"
+          placeholder='{
+  "session": "<%= sessionName %>",
+  "endpoint": "http://localhost:8085/admin/sessions/<%= encodeURIComponent(sessionName) %>/poke",
+  "sources": []
+}'
+        ><%= typeof watchersContent !== 'undefined' ? watchersContent : '' %></textarea>
+        <p class="form-help">Configure external event sources that poke this session. JSON format.</p>
+      </div>
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save Watchers</button>
+    </form>
+
+    <details style="margin-top: var(--space-lg);">
+      <summary style="cursor: pointer;">Watcher Configuration Reference</summary>
+      <div style="margin-top: var(--space-sm);">
+        <h4 style="margin-bottom: var(--space-xs);">Source Types</h4>
+        <table class="table" style="font-size: 0.875rem;">
+          <tr><td><code>imap</code></td><td>Email via IMAP IDLE</td></tr>
+          <tr><td><code>google-calendar</code></td><td>Calendar event reminders</td></tr>
+          <tr><td><code>github-webhook</code></td><td>GitHub events (PR, issues)</td></tr>
+          <tr><td><code>slack</code></td><td>Slack channel mentions</td></tr>
+        </table>
+        <h4 style="margin-top: var(--space-md); margin-bottom: var(--space-xs);">Common Options</h4>
+        <table class="table" style="font-size: 0.875rem;">
+          <tr><td><code>enabled</code></td><td>Enable/disable this source</td></tr>
+          <tr><td><code>sendViaWhatsapp</code></td><td>Send agent response to WhatsApp</td></tr>
+          <tr><td><code>prefix</code></td><td>Message prefix (e.g., [EMAIL])</td></tr>
+          <tr><td><code>template</code></td><td>Message template with {{placeholders}}</td></tr>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <!-- Skills Tab -->
+  <div id="tab-skills" class="tab-content">
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-md);">Installed Skills</h3>
+    <% if (skills && skills.length > 0) { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% skills.forEach(skill => { %>
+        <tr>
+          <td><strong><%= skill.name %></strong></td>
+          <td><%= skill.description || '<em>No description</em>' %></td>
+          <td><code style="font-size: 0.75rem;"><%= skill.path %></code></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <p class="form-help">No skills installed. Create a <code>skills/</code> folder with skill subdirectories containing <code>SKILL.md</code> files.</p>
+    <% } %>
+  </div>
+
+  <!-- Memory Tab -->
+  <div id="tab-memory" class="tab-content">
+    <% if (memory.entities.length > 0 || memory.facts.length > 0 || memory.tasks.length > 0 || memory.decisions.length > 0) { %>
+
+    <% if (memory.entities.length > 0) { %>
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Entities (<%= memory.entities.length %>)</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);">
+      <% memory.entities.forEach(entity => { %>
+      <div style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 4px; padding: var(--space-sm); min-width: 200px;">
+        <strong><%= entity.name %></strong>
+        <span class="badge badge-default" style="margin-left: var(--space-xs);"><%= entity.type %></span>
+        <% if (entity.aliases && entity.aliases.length > 0) { %>
+        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">
+          aka: <%= entity.aliases.join(', ') %>
+        </div>
+        <% } %>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (memory.tasks.length > 0) { %>
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Tasks (<%= memory.tasks.length %>)</h3>
+    <table class="table" style="margin-bottom: var(--space-lg);">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Task</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% memory.tasks.forEach(task => { %>
+        <tr>
+          <td>
+            <% if (task.status === 'completed') { %>
+            <span class="badge badge-success">Completed</span>
+            <% } else if (task.status === 'in_progress') { %>
+            <span class="badge badge-info">In Progress</span>
+            <% } else { %>
+            <span class="badge badge-default">Pending</span>
+            <% } %>
+          </td>
+          <td><%= task.content %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+
+    <% if (memory.facts.length > 0) { %>
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Facts (<%= memory.facts.length %>)</h3>
+    <ul style="margin-bottom: var(--space-lg); padding-left: var(--space-lg);">
+      <% memory.facts.forEach(fact => { %>
+      <li style="margin-bottom: var(--space-xs);"><%= fact.content %></li>
+      <% }) %>
+    </ul>
+    <% } %>
+
+    <% if (memory.decisions.length > 0) { %>
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-sm);">Decisions (<%= memory.decisions.length %>)</h3>
+    <ul style="margin-bottom: var(--space-lg); padding-left: var(--space-lg);">
+      <% memory.decisions.forEach(decision => { %>
+      <li style="margin-bottom: var(--space-xs);"><%= decision.content %></li>
+      <% }) %>
+    </ul>
+    <% } %>
+
+    <% } else { %>
+    <p class="form-help">No entity memory found.</p>
+    <% } %>
+
+    <% if (memory.sessionMd) { %>
+    <details style="margin-top: var(--space-lg);">
+      <summary style="cursor: pointer;">Legacy session.md</summary>
+      <pre style="margin-top: var(--space-sm); max-height: 400px; overflow: auto;"><code><%= memory.sessionMd %></code></pre>
+    </details>
+    <% } %>
+  </div>
+
+  <!-- History Tab -->
+  <div id="tab-history" class="tab-content">
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-md);">Recent Conversation (<%= history.length %> turns)</h3>
+    <% if (history && history.length > 0) { %>
+    <div class="chat-history" style="max-height: 600px; overflow-y: auto; padding: var(--space-sm);">
+      <% history.forEach(turn => { %>
+      <div class="chat-message <%= turn.role %>" style="
+        margin-bottom: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: 8px;
+        max-width: 85%;
+        <%= turn.role === 'user' ? 'margin-right: auto; background: var(--color-bg); border: 1px solid var(--color-border);' : 'margin-left: auto; background: rgba(139, 117, 0, 0.1); border: 1px solid var(--color-gold);' %>
+      ">
+        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 4px;">
+          <%= turn.role === 'user' ? 'User' : 'Assistant' %>
+        </div>
+        <div style="white-space: pre-wrap; word-break: break-word;"><%= turn.content %></div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <p class="form-help">No conversation history found.</p>
+    <% } %>
+  </div>
+
+  <!-- Files Tab -->
+  <div id="tab-files" class="tab-content">
+    <h3 style="font-size: 1rem; margin-bottom: var(--space-md);">Session Files</h3>
+    <p class="form-help" style="margin-bottom: var(--space-md);">
+      Showing files in session directory (excluding scratchpad/, grips/, .git/)
+    </p>
+    <% if (files && files.length > 0) { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Size</th>
+          <th>Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% files.forEach(file => { %>
+        <tr>
+          <td>
+            <% if (file.isDirectory) { %>
+            <span style="color: var(--color-gold);">&#128193;</span>
+            <% } else { %>
+            <span style="color: var(--color-text-muted);">&#128196;</span>
+            <% } %>
+            <code style="margin-left: 4px;"><%= file.relativePath %></code>
+          </td>
+          <td style="font-size: 0.875rem;">
+            <% if (!file.isDirectory) { %>
+            <%= file.size < 1024 ? file.size + ' B' : (file.size < 1024 * 1024 ? (file.size / 1024).toFixed(1) + ' KB' : (file.size / 1024 / 1024).toFixed(1) + ' MB') %>
+            <% } else { %>
+            -
+            <% } %>
+          </td>
+          <td style="font-size: 0.875rem; color: var(--color-text-muted);">
+            <%= file.modified.toLocaleDateString() %> <%= file.modified.toLocaleTimeString() %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <p class="form-help">No files found in session directory.</p>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  // Handle form responses
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('htmx:afterRequest', (e) => {
+      const xhr = e.detail.xhr;
+      const alertsDiv = document.getElementById('alerts');
+
+      if (xhr.status === 200) {
+        alertsDiv.innerHTML = '<div class="alert alert-success">Saved successfully</div>';
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          let msg = data.error || 'Failed to save';
+          if (data.errors) {
+            msg += ': ' + data.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+          }
+          alertsDiv.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+        } catch {
+          alertsDiv.innerHTML = '<div class="alert alert-error">Failed to save</div>';
+        }
+      }
+
+      setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+    });
+  });
+</script>

@@ -57,7 +57,7 @@ export async function createWaSocket(
     },
     logger: baileysLogger,
     printQRInTerminal: false,
-    browser: ["warelay", "cli", "1.0.0"],
+    browser: ["klaus", "cli", "1.0.0"],
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: false,

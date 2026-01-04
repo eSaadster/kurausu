@@ -11,7 +11,7 @@ const monitorTwilio = vi.fn();
 const logTwilioFrom = vi.fn();
 const logWebSelfId = vi.fn();
 const waitForever = vi.fn();
-const spawnRelayTmux = vi.fn().mockResolvedValue("warelay-relay");
+const spawnRelayTmux = vi.fn().mockResolvedValue("klaus-relay");
 
 const runtime = {
   log: vi.fn(),
@@ -87,7 +87,7 @@ describe("cli program", () => {
     const program = buildProgram();
     await program.parseAsync(["relay:tmux:attach"], { from: "user" });
     expect(spawnRelayTmux).toHaveBeenCalledWith(
-      "pnpm warelay relay --verbose",
+      "pnpm klaus relay --verbose",
       true,
       false,
     );
@@ -122,7 +122,7 @@ describe("cli program", () => {
     await program.parseAsync(["relay:heartbeat:tmux"], { from: "user" });
     const shouldAttach = Boolean(process.stdout.isTTY);
     expect(spawnRelayTmux).toHaveBeenCalledWith(
-      "pnpm warelay relay --verbose --heartbeat-now",
+      "pnpm klaus relay --verbose --heartbeat-now",
       shouldAttach,
     );
   });

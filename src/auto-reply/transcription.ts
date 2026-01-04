@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import type { WarelayConfig } from "../config/config.js";
+import type { KlausConfig } from "../config/config.js";
 import { isVerbose, logVerbose } from "../globals.js";
 import { runExec } from "../process/exec.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -14,7 +14,7 @@ export function isAudio(mediaType?: string | null) {
 }
 
 export async function transcribeInboundAudio(
-  cfg: WarelayConfig,
+  cfg: KlausConfig,
   ctx: MsgContext,
   runtime: RuntimeEnv,
 ): Promise<{ text: string } | undefined> {
@@ -32,7 +32,7 @@ export async function transcribeInboundAudio(
       const buffer = Buffer.from(arrayBuf);
       tmpPath = path.join(
         os.tmpdir(),
-        `warelay-audio-${crypto.randomUUID()}.ogg`,
+        `klaus-audio-${crypto.randomUUID()}.ogg`,
       );
       await fs.writeFile(tmpPath, buffer);
       mediaPath = tmpPath;

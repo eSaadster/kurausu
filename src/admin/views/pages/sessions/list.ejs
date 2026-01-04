@@ -1,0 +1,56 @@
+<div class="card">
+  <h2 class="card-title">WhatsApp Sessions</h2>
+
+  <% if (sessions && sessions.length > 0) { %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Session</th>
+        <th>Type</th>
+        <th>Configuration</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% sessions.forEach(session => { %>
+      <tr>
+        <td>
+          <a href="/admin/sessions/<%= encodeURIComponent(session.name) %>">
+            <strong class="session-type"><%= session.name %></strong>
+          </a>
+        </td>
+        <td>
+          <span class="badge badge-default"><%= session.type === 'dm' ? 'Direct' : 'Group' %></span>
+        </td>
+        <td>
+          <% if (session.hasEnv) { %><span class="badge badge-success">.env</span><% } %>
+          <% if (session.hasSystem) { %><span class="badge badge-success">SYSTEM.md</span><% } %>
+          <% if (session.hasMcporter) { %><span class="badge badge-success">MCP</span><% } %>
+          <% if (session.hasClicks) { %><span class="badge badge-success">Clicks</span><% } %>
+        </td>
+        <td>
+          <a href="/admin/sessions/<%= encodeURIComponent(session.name) %>" class="btn btn-sm">
+            Edit
+          </a>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No sessions found in ~/klaus/whatsapp/</p>
+  <p class="form-help">Sessions are created automatically when you receive messages from new contacts or groups.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Session Configuration</h2>
+  <p>Each session can have its own configuration files:</p>
+  <ul style="margin-left: var(--space-lg); margin-top: var(--space-sm);">
+    <li><code>.env</code> - Environment variables (PI_AGENT_MODEL, API keys)</li>
+    <li><code>SYSTEM.md</code> - System prompt for the AI agent</li>
+    <li><code>mcporter.json</code> - MCP server configuration</li>
+    <li><code>clicks.json</code> - Scheduled click tasks</li>
+    <li><code>config.json</code> - Session metadata (shared context)</li>
+  </ul>
+</div>

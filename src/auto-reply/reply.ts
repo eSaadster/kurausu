@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import path from "node:path";
 
 import { loadConfig, type WarelayConfig } from "../config/config.js";
 import {
@@ -11,9 +12,12 @@ import {
 } from "../config/sessions.js";
 import { info, isVerbose, logVerbose } from "../globals.js";
 import { ensureMediaHosted } from "../media/host.js";
+import { splitMediaFromOutput } from "../media/parse.js";
 import { runCommandWithTimeout } from "../process/exec.js";
 import { defaultRuntime, type RuntimeEnv } from "../runtime.js";
 import { runCommandReply } from "./command-reply.js";
+import { getPiAgentManager } from "./pi-agent.js";
+import { WHATSAPP_BASE_PATH } from "./pi-agent-tools.js";
 import {
   applyTemplate,
   type MsgContext,
@@ -46,7 +50,7 @@ export async function getReplyFromConfig(
   };
   let typingTimer: NodeJS.Timeout | undefined;
   const typingIntervalMs =
-    reply?.mode === "command"
+    reply?.mode === "command" || reply?.mode === "pi-agent"
       ? (reply.typingIntervalSeconds ??
           reply?.session?.typingIntervalSeconds ??
           8) * 1000
@@ -196,7 +200,7 @@ export async function getReplyFromConfig(
   }
 
   const prefixedBody =
-    transcribedText && reply?.mode === "command"
+    transcribedText && reply?.mode !== "text"
       ? [prefixedBodyBase, `Transcript:\n${transcribedText}`]
           .filter(Boolean)
           .join("\n\n")
@@ -206,7 +210,7 @@ export async function getReplyFromConfig(
     : undefined;
   // For command prompts we prepend the media note so Claude et al. see it; text replies stay clean.
   const mediaReplyHint =
-    mediaNote && reply?.mode === "command"
+    mediaNote && (reply?.mode === "command" || reply?.mode === "pi-agent")
       ? "To send an image back, add a line like: MEDIA:https://example.com/image.jpg (no spaces). Keep caption in the text body."
       : undefined;
   const commandBody = mediaNote
@@ -262,6 +266,52 @@ export async function getReplyFromConfig(
       return payload;
     } finally {
       cleanupTyping();
+    }
+  }
+
+  if (reply && reply.mode === "pi-agent") {
+    await onReplyStart();
+    const sessionName = sessionKey ?? deriveSessionKey("per-sender", ctx);
+    const manager = getPiAgentManager(
+      {
+        model: reply.piAgentModel,
+        thinkingLevel: reply.piAgentThinkingLevel,
+        timeoutMs,
+      },
+      idleMinutes,
+    );
+
+    if (isNewSession && sessionCfg) {
+      manager.resetSession(sessionName);
+      logVerbose(`Reset pi-agent session for ${sessionName}`);
+    }
+
+    try {
+      const result = await manager.prompt(sessionName, commandBody, {
+        timeoutMs,
+        mediaPath: ctx.MediaPath,
+        mediaType: ctx.MediaType,
+      });
+      logVerbose(
+        `Pi agent response (${result.isNew ? "new" : "existing"} session, msg #${result.messageCount}): ${result.text.slice(0, 100)}...`,
+      );
+      cleanupTyping();
+      const sessionScratchpad = path.join(
+        WHATSAPP_BASE_PATH,
+        sessionName,
+        "scratchpad",
+      );
+      const { text: cleanedText, mediaUrls } = splitMediaFromOutput(
+        result.text,
+        sessionScratchpad,
+      );
+      return cleanedText || mediaUrls?.length
+        ? { text: cleanedText || undefined, mediaUrl: mediaUrls?.[0], mediaUrls }
+        : undefined;
+    } catch (err) {
+      logVerbose(`Pi agent error: ${err}`);
+      cleanupTyping();
+      return { text: `Pi agent error: ${err}` };
     }
   }
 

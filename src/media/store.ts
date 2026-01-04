@@ -8,7 +8,7 @@ import { pipeline } from "node:stream/promises";
 
 import { detectMime, extensionForMime } from "./mime.js";
 
-const MEDIA_DIR = path.join(os.homedir(), ".warelay", "media");
+const MEDIA_DIR = path.join(os.homedir(), ".klaus", "media");
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const DEFAULT_TTL_MS = 2 * 60 * 1000; // 2 minutes
 

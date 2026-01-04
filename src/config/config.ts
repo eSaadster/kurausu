@@ -5,8 +5,9 @@ import path from "node:path";
 import JSON5 from "json5";
 import { z } from "zod";
 
-export type ReplyMode = "text" | "command";
+export type ReplyMode = "text" | "command" | "pi-agent";
 export type ClaudeOutputFormat = "text" | "json" | "stream-json";
+export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high";
 export type SessionScope = "per-sender" | "global";
 
 export type SessionConfig = {
@@ -42,7 +43,7 @@ export type WebConfig = {
   reconnect?: WebReconnectConfig;
 };
 
-export type WarelayConfig = {
+export type KlausConfig = {
   logging?: LoggingConfig;
   inbound?: {
     allowFrom?: string[]; // E.164 numbers allowed to trigger auto-reply (without whatsapp:)
@@ -62,6 +63,8 @@ export type WarelayConfig = {
       mediaUrl?: string; // optional media attachment (path or URL)
       session?: SessionConfig;
       claudeOutputFormat?: ClaudeOutputFormat; // when command starts with `claude`, force an output format
+      piAgentModel?: string; // model ID for pi-agent mode
+      piAgentThinkingLevel?: ThinkingLevel; // thinking level for pi-agent mode
       mediaMaxMb?: number; // optional cap for outbound media (default 5MB)
       typingIntervalSeconds?: number; // how often to refresh typing indicator while command runs
       heartbeatMinutes?: number; // auto-ping cadence for command mode
@@ -70,11 +73,15 @@ export type WarelayConfig = {
   web?: WebConfig;
 };
 
-export const CONFIG_PATH = path.join(os.homedir(), ".warelay", "warelay.json");
+export const CONFIG_PATH = path.join(os.homedir(), ".klaus", "klaus.json");
 
 const ReplySchema = z
   .object({
-    mode: z.union([z.literal("text"), z.literal("command")]),
+    mode: z.union([
+      z.literal("text"),
+      z.literal("command"),
+      z.literal("pi-agent"),
+    ]),
     text: z.string().optional(),
     command: z.array(z.string()).optional(),
     cwd: z.string().optional(),
@@ -110,16 +117,31 @@ const ReplySchema = z
         z.undefined(),
       ])
       .optional(),
+    piAgentModel: z.string().optional(),
+    piAgentThinkingLevel: z
+      .union([
+        z.literal("off"),
+        z.literal("minimal"),
+        z.literal("low"),
+        z.literal("medium"),
+        z.literal("high"),
+      ])
+      .optional(),
   })
   .refine(
-    (val) => (val.mode === "text" ? Boolean(val.text) : Boolean(val.command)),
+    (val) => {
+      if (val.mode === "text") return Boolean(val.text);
+      if (val.mode === "command") return Boolean(val.command);
+      if (val.mode === "pi-agent") return true;
+      return false;
+    },
     {
       message:
         "reply.text is required for mode=text; reply.command is required for mode=command",
     },
   );
 
-const WarelaySchema = z.object({
+const KlausSchema = z.object({
   logging: z
     .object({
       level: z
@@ -164,24 +186,26 @@ const WarelaySchema = z.object({
     .optional(),
 });
 
-export function loadConfig(): WarelayConfig {
-  // Read ~/.warelay/warelay.json (JSON5) if present.
+export function loadConfig(): KlausConfig {
+  // Read ~/.klaus/klaus.json (JSON5) if present.
   try {
     if (!fs.existsSync(CONFIG_PATH)) return {};
     const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
     const parsed = JSON5.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return {};
-    const validated = WarelaySchema.safeParse(parsed);
+    const validated = KlausSchema.safeParse(parsed);
     if (!validated.success) {
-      console.error("Invalid warelay config:");
+      console.error("Invalid klaus config:");
       for (const iss of validated.error.issues) {
         console.error(`- ${iss.path.join(".")}: ${iss.message}`);
       }
       return {};
     }
-    return validated.data as WarelayConfig;
+    return validated.data as KlausConfig;
   } catch (err) {
     console.error(`Failed to read config at ${CONFIG_PATH}`, err);
     return {};
   }
 }
+
+export type WarelayConfig = KlausConfig;

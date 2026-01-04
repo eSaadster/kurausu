@@ -3,11 +3,11 @@ import os from "node:os";
 import path from "node:path";
 
 import pino, { type Bindings, type LevelWithSilent, type Logger } from "pino";
-import { loadConfig, type WarelayConfig } from "./config/config.js";
+import { loadConfig, type KlausConfig } from "./config/config.js";
 import { isVerbose } from "./globals.js";
 
-const DEFAULT_LOG_DIR = path.join(os.tmpdir(), "warelay");
-export const DEFAULT_LOG_FILE = path.join(DEFAULT_LOG_DIR, "warelay.log");
+const DEFAULT_LOG_DIR = path.join(os.tmpdir(), "klaus");
+export const DEFAULT_LOG_FILE = path.join(DEFAULT_LOG_DIR, "klaus.log");
 
 const ALLOWED_LEVELS: readonly LevelWithSilent[] = [
   "silent",
@@ -43,7 +43,7 @@ function normalizeLevel(level?: string): LevelWithSilent {
 }
 
 function resolveSettings(): ResolvedSettings {
-  const cfg: WarelayConfig["logging"] | undefined =
+  const cfg: KlausConfig["logging"] | undefined =
     overrideSettings ?? loadConfig().logging;
   const level = normalizeLevel(cfg?.level);
   const file = cfg?.file ?? DEFAULT_LOG_FILE;

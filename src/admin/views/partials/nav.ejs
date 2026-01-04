@@ -1,0 +1,75 @@
+<aside class="sidebar">
+  <div class="sidebar-logo">WARELAY ADMIN</div>
+
+  <nav class="sidebar-section">
+    <ul class="sidebar-nav">
+      <li>
+        <a href="/admin" class="<%= currentPath === '/' || currentPath === '/admin' ? 'active' : '' %>">
+          Dashboard
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <nav class="sidebar-section">
+    <div class="sidebar-section-title">Configuration</div>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="/admin/config" class="<%= currentPath === '/admin/config' ? 'active' : '' %>">
+          Main Config
+        </a>
+      </li>
+      <li>
+        <a href="/admin/models" class="<%= currentPath === '/admin/models' ? 'active' : '' %>">
+          Models
+        </a>
+      </li>
+      <li>
+        <a href="/admin/settings" class="<%= currentPath === '/admin/settings' ? 'active' : '' %>">
+          Settings
+        </a>
+      </li>
+      <li>
+        <a href="/admin/mcp" class="<%= currentPath === '/admin/mcp' ? 'active' : '' %>">
+          MCP Servers
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <nav class="sidebar-section">
+    <div class="sidebar-section-title">Sessions</div>
+    <ul class="sidebar-nav">
+      <% if (sessions && sessions.length > 0) { %>
+        <% sessions.forEach(session => { %>
+        <li>
+          <a
+            href="/admin/sessions/<%= encodeURIComponent(session.name) %>"
+            class="session-type <%= currentPath === '/admin/sessions/' + encodeURIComponent(session.name) ? 'active' : '' %>"
+          >
+            <%= session.name %>
+          </a>
+        </li>
+        <% }) %>
+      <% } else { %>
+        <li><span style="color: var(--color-text-muted); padding: var(--space-sm);">No sessions</span></li>
+      <% } %>
+    </ul>
+  </nav>
+
+  <nav class="sidebar-section">
+    <div class="sidebar-section-title">Services</div>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="/admin/clicks" class="<%= currentPath === '/admin/clicks' ? 'active' : '' %>">
+          Clicks
+        </a>
+      </li>
+      <li>
+        <a href="/admin/grips" class="<%= currentPath === '/admin/grips' ? 'active' : '' %>">
+          Grips
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>

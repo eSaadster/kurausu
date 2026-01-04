@@ -1,0 +1,63 @@
+<div class="status-grid" hx-get="/admin/status" hx-trigger="every 5s" hx-swap="innerHTML">
+  <div class="status-card">
+    <div class="status-card-value">
+      <span class="status-indicator <%= data.mcpOnline === data.mcpCount ? 'ok' : 'error' %>"></span>
+      <%= data.mcpOnline %>/<%= data.mcpCount %>
+    </div>
+    <div class="status-card-label">MCP Servers</div>
+  </div>
+
+  <div class="status-card">
+    <div class="status-card-value">
+      <span class="status-indicator ok"></span>
+      <%= data.clicksEnabled %>/<%= data.clicksCount %>
+    </div>
+    <div class="status-card-label">Clicks Active</div>
+  </div>
+
+  <div class="status-card">
+    <div class="status-card-value">
+      <span class="status-indicator <%= data.gripsActive > 0 ? 'ok' : 'unknown' %>"></span>
+      <%= data.gripsActive %>
+    </div>
+    <div class="status-card-label">Active Grips</div>
+  </div>
+
+  <div class="status-card">
+    <div class="status-card-value"><%= data.sessionsCount %></div>
+    <div class="status-card-label">Sessions</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Recent Activity</h2>
+  <% if (data.recentActivity && data.recentActivity.length > 0) { %>
+  <ul class="activity-list">
+    <% data.recentActivity.forEach(activity => { %>
+    <li class="activity-item">
+      <span class="status-indicator <%= activity.status %>"></span>
+      <span class="activity-time"><%= formatTime(activity.time) %></span>
+      <span><%= activity.message %></span>
+    </li>
+    <% }) %>
+  </ul>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No recent activity</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Quick Actions</h2>
+  <div class="quick-actions">
+    <button
+      class="btn"
+      hx-post="/admin/reload"
+      hx-swap="none"
+    >
+      Reload Config
+    </button>
+    <a href="/admin/config" class="btn">Edit Main Config</a>
+    <a href="/admin/clicks" class="btn">Manage Clicks</a>
+    <a href="/admin/grips" class="btn">View Grips</a>
+  </div>
+</div>

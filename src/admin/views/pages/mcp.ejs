@@ -1,0 +1,116 @@
+<div class="card">
+  <h2 class="card-title">MCP Servers</h2>
+  <p class="form-help" style="margin-bottom: var(--space-md);">
+    Path: <code><%= mcpPath %></code>
+  </p>
+
+  <% if (servers && servers.length > 0) { %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Server</th>
+        <th>Base URL</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% servers.forEach(server => { %>
+      <tr>
+        <td><strong><%= server.name %></strong></td>
+        <td><code style="font-size: 0.8em;"><%= server.baseUrl %></code></td>
+        <td>
+          <% if (server.status.status === 'connected') { %>
+          <span class="badge badge-success">Connected</span>
+          <% } else if (server.status.status === 'error') { %>
+          <span class="badge badge-danger">Error</span>
+          <% } else { %>
+          <span class="badge badge-default">Disconnected</span>
+          <% } %>
+        </td>
+        <td>
+          <div style="display: flex; gap: var(--space-xs);">
+            <button
+              class="btn btn-sm btn-success"
+              hx-post="/admin/mcp/servers/<%= server.name %>/start"
+              hx-swap="none"
+            >Start</button>
+            <button
+              class="btn btn-sm"
+              hx-post="/admin/mcp/servers/<%= server.name %>/stop"
+              hx-swap="none"
+            >Stop</button>
+            <button
+              class="btn btn-sm btn-danger"
+              hx-delete="/admin/mcp/servers/<%= server.name %>"
+              hx-confirm="Delete server '<%= server.name %>'?"
+              hx-swap="none"
+              <% if (readOnly) { %>disabled<% } %>
+            >Delete</button>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No MCP servers configured.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Edit Configuration</h2>
+  <form id="mcp-form" hx-post="/admin/mcp" hx-swap="none">
+    <div class="form-group">
+      <label class="form-label">MCP Config (JSON)</label>
+      <textarea
+        name="content"
+        class="form-textarea"
+        style="min-height: 300px;"
+      ><%= JSON.stringify(mcpConfig, null, 2) %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Save Config</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Add New Server</h2>
+  <form id="add-server-form" hx-post="/admin/mcp/servers" hx-swap="none">
+    <div class="form-group">
+      <label class="form-label" for="name">Server Name</label>
+      <input type="text" name="name" id="name" class="form-input" placeholder="twitter" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="baseUrl">Base URL</label>
+      <input type="url" name="baseUrl" id="baseUrl" class="form-input" placeholder="https://backend.composio.dev/v3/mcp/..." required>
+    </div>
+    <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>Add Server</button>
+  </form>
+</div>
+
+<script>
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('htmx:afterRequest', (e) => {
+      const xhr = e.detail.xhr;
+      const alertsDiv = document.getElementById('alerts');
+
+      if (xhr.status === 200) {
+        alertsDiv.innerHTML = '<div class="alert alert-success">Operation successful</div>';
+        if (form.id === 'mcp-form' || form.id === 'add-server-form') {
+          setTimeout(() => location.reload(), 1000);
+        }
+      } else {
+        alertsDiv.innerHTML = '<div class="alert alert-error">Operation failed</div>';
+      }
+
+      setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+    });
+  });
+
+  // Handle button clicks
+  document.querySelectorAll('button[hx-post], button[hx-delete]').forEach(btn => {
+    btn.addEventListener('htmx:afterRequest', () => {
+      setTimeout(() => location.reload(), 500);
+    });
+  });
+</script>

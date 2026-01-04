@@ -447,7 +447,7 @@ describe("config and templating", () => {
   });
 
   it("getReplyFromConfig runs command and manages session store", async () => {
-    const tmpStore = path.join(os.tmpdir(), `warelay-store-${Date.now()}.json`);
+    const tmpStore = path.join(os.tmpdir(), `klaus-store-${Date.now()}.json`);
     vi.spyOn(crypto, "randomUUID").mockReturnValue("session-123");
     const runSpy = vi.spyOn(index, "runCommandWithTimeout").mockResolvedValue({
       stdout: "cmd output\n",
@@ -501,7 +501,7 @@ describe("config and templating", () => {
   });
 
   it("only sends system prompt once per session when configured", async () => {
-    const tmpStore = path.join(os.tmpdir(), `warelay-store-${Date.now()}.json`);
+    const tmpStore = path.join(os.tmpdir(), `klaus-store-${Date.now()}.json`);
     vi.spyOn(crypto, "randomUUID").mockReturnValue("sid-1");
     const runSpy = vi.spyOn(index, "runCommandWithTimeout").mockResolvedValue({
       stdout: "ok\n",

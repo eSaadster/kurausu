@@ -86,7 +86,7 @@ if (isMain) {
   // These log the error and exit gracefully instead of crashing without trace.
   process.on("unhandledRejection", (reason, _promise) => {
     console.error(
-      "[warelay] Unhandled promise rejection:",
+      "[klaus] Unhandled promise rejection:",
       reason instanceof Error ? (reason.stack ?? reason.message) : reason,
     );
     process.exit(1);
@@ -94,7 +94,7 @@ if (isMain) {
 
   process.on("uncaughtException", (error) => {
     console.error(
-      "[warelay] Uncaught exception:",
+      "[klaus] Uncaught exception:",
       error.stack ?? error.message,
     );
     process.exit(1);

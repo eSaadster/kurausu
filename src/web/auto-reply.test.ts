@@ -79,7 +79,7 @@ describe("heartbeat helpers", () => {
 
 describe("resolveHeartbeatRecipients", () => {
   const makeStore = async (entries: Record<string, { updatedAt: number }>) => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "warelay-heartbeat-"));
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "klaus-heartbeat-"));
     const storePath = path.join(dir, "sessions.json");
     await fs.writeFile(storePath, JSON.stringify(entries));
     return {
@@ -218,7 +218,7 @@ describe("runWebHeartbeatOnce", () => {
 
   it("does not refresh updatedAt when heartbeat is skipped", async () => {
     const tmpDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "warelay-heartbeat-"),
+      path.join(os.tmpdir(), "klaus-heartbeat-"),
     );
     const storePath = path.join(tmpDir, "sessions.json");
     const now = Date.now();
@@ -258,7 +258,7 @@ describe("runWebHeartbeatOnce", () => {
 
   it("heartbeat reuses existing session id when last inbound is present", async () => {
     const tmpDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "warelay-heartbeat-session-"),
+      path.join(os.tmpdir(), "klaus-heartbeat-session-"),
     );
     const storePath = path.join(tmpDir, "sessions.json");
     const sessionId = "sess-keep";
@@ -308,7 +308,7 @@ describe("runWebHeartbeatOnce", () => {
 
   it("heartbeat honors session-id override and seeds store", async () => {
     const tmpDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "warelay-heartbeat-override-"),
+      path.join(os.tmpdir(), "klaus-heartbeat-override-"),
     );
     const storePath = path.join(tmpDir, "sessions.json");
     await fs.writeFile(storePath, JSON.stringify({}));
@@ -870,7 +870,7 @@ describe("web auto-reply", () => {
 
   it("emits heartbeat logs with connection metadata", async () => {
     vi.useFakeTimers();
-    const logPath = `/tmp/warelay-heartbeat-${crypto.randomUUID()}.log`;
+    const logPath = `/tmp/klaus-heartbeat-${crypto.randomUUID()}.log`;
     setLoggerOverride({ level: "trace", file: logPath });
 
     const runtime = {
@@ -912,7 +912,7 @@ describe("web auto-reply", () => {
   });
 
   it("logs outbound replies to file", async () => {
-    const logPath = `/tmp/warelay-log-test-${crypto.randomUUID()}.log`;
+    const logPath = `/tmp/klaus-log-test-${crypto.randomUUID()}.log`;
     setLoggerOverride({ level: "trace", file: logPath });
 
     let capturedOnMessage:

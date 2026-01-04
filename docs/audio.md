@@ -1,7 +1,7 @@
 # Audio / Voice Notes — 2025-11-25
 
 ## What works
-- **Optional transcription**: If `inbound.transcribeAudio.command` is set in `~/.warelay/warelay.json`, warelay will:
+- **Optional transcription**: If `inbound.transcribeAudio.command` is set in `~/.klaus/klaus.json`, klaus will:
   1) Download inbound audio (Web or Twilio) to a temp path if only a URL is present.
   2) Run the configured CLI (templated with `{{MediaPath}}`), expecting transcript on stdout.
   3) Replace `Body` with the transcript, set `{{Transcript}}`, and prepend the original media path plus a `Transcript:` section in the command prompt so models see both.

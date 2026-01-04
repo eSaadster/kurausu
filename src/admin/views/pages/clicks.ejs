@@ -1,0 +1,113 @@
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+    <h2 class="card-title" style="margin-bottom: 0;">Clicks Scheduler</h2>
+    <div style="display: flex; gap: var(--space-sm);">
+      <% if (schedulerRunning) { %>
+      <span class="badge badge-success">Running</span>
+      <button class="btn btn-sm" hx-post="/admin/clicks/scheduler/stop" hx-swap="none">Stop Scheduler</button>
+      <% } else { %>
+      <span class="badge badge-default">Stopped</span>
+      <button class="btn btn-sm btn-success" hx-post="/admin/clicks/scheduler/start" hx-swap="none">Start Scheduler</button>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (allClicks && allClicks.length > 0) { %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Click</th>
+        <th>Session</th>
+        <th>Interval</th>
+        <th>Last Run</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% allClicks.forEach(item => { %>
+      <tr>
+        <td>
+          <strong><%= item.click.name %></strong>
+          <br>
+          <code style="font-size: 0.8em;"><%= item.click.id %></code>
+        </td>
+        <td><code><%= item.session %></code></td>
+        <td><%= item.click.intervalMinutes %> min</td>
+        <td>
+          <% if (item.state && item.state.lastRunTime) { %>
+          <%= formatTime(item.state.lastRunTime) %>
+          <% } else { %>
+          <span style="color: var(--color-text-muted);">Never</span>
+          <% } %>
+        </td>
+        <td>
+          <% if (item.click.enabled === false) { %>
+          <span class="badge badge-default">Disabled</span>
+          <% } else if (item.state && item.state.lastResult === 'ALERT') { %>
+          <span class="badge badge-danger">Alert</span>
+          <% } else if (item.state && item.state.lastResult === 'ERROR') { %>
+          <span class="badge badge-danger">Error</span>
+          <% } else if (item.state && item.state.lastResult === 'OK') { %>
+          <span class="badge badge-success">OK</span>
+          <% } else { %>
+          <span class="badge badge-default">Pending</span>
+          <% } %>
+        </td>
+        <td>
+          <div style="display: flex; gap: var(--space-xs);">
+            <button
+              class="btn btn-sm"
+              hx-post="/admin/clicks/<%= encodeURIComponent(item.session) %>/<%= item.click.id %>/toggle"
+              hx-swap="none"
+              <% if (readOnly) { %>disabled<% } %>
+            >
+              <%= item.click.enabled === false ? 'Enable' : 'Disable' %>
+            </button>
+            <button
+              class="btn btn-sm btn-primary"
+              hx-post="/admin/clicks/<%= encodeURIComponent(item.session) %>/<%= item.click.id %>/trigger"
+              hx-swap="none"
+            >
+              Trigger
+            </button>
+          </div>
+        </td>
+      </tr>
+      <% if (item.state && item.state.lastSummary) { %>
+      <tr>
+        <td colspan="6" style="padding-left: var(--space-xl); background: var(--color-bg); font-size: 0.875rem;">
+          <strong>Last summary:</strong> <%= item.state.lastSummary.slice(0, 200) %><%= item.state.lastSummary.length > 200 ? '...' : '' %>
+        </td>
+      </tr>
+      <% } %>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No clicks configured.</p>
+  <p class="form-help">Configure clicks in individual session settings.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">About Clicks</h2>
+  <p>Clicks are scheduled automated tasks that run at regular intervals. Each click:</p>
+  <ul style="margin-left: var(--space-lg); margin-top: var(--space-sm);">
+    <li>Executes an AI agent with specific instructions</li>
+    <li>Can send alerts based on criteria you define</li>
+    <li>Maintains its own memory across runs (if enabled)</li>
+    <li>Can access session-specific tools and context</li>
+  </ul>
+  <p style="margin-top: var(--space-md);">
+    <a href="/admin/sessions" class="btn">Configure Session Clicks</a>
+  </p>
+</div>
+
+<script>
+  document.querySelectorAll('button[hx-post]').forEach(btn => {
+    btn.addEventListener('htmx:afterRequest', () => {
+      setTimeout(() => location.reload(), 500);
+    });
+  });
+</script>

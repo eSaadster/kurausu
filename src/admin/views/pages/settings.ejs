@@ -1,0 +1,116 @@
+<div class="card">
+  <h2 class="card-title">Pi Agent Settings</h2>
+  <p class="form-help" style="margin-bottom: var(--space-md);">
+    Path: <code><%= settingsPath %></code>
+  </p>
+
+  <form id="settings-form" hx-post="/admin/settings" hx-swap="none">
+    <div class="form-group">
+      <label class="form-label" for="defaultThinkingLevel">Default Thinking Level</label>
+      <select name="defaultThinkingLevel" id="defaultThinkingLevel" class="form-select">
+        <option value="" <%= !settings.defaultThinkingLevel ? 'selected' : '' %>>Not set (use model default)</option>
+        <option value="off" <%= settings.defaultThinkingLevel === 'off' ? 'selected' : '' %>>Off</option>
+        <option value="minimal" <%= settings.defaultThinkingLevel === 'minimal' ? 'selected' : '' %>>Minimal</option>
+        <option value="low" <%= settings.defaultThinkingLevel === 'low' ? 'selected' : '' %>>Low</option>
+        <option value="medium" <%= settings.defaultThinkingLevel === 'medium' ? 'selected' : '' %>>Medium</option>
+        <option value="high" <%= settings.defaultThinkingLevel === 'high' ? 'selected' : '' %>>High</option>
+      </select>
+      <p class="form-help">Controls how much "thinking" Claude does before responding</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="defaultProvider">Default Provider</label>
+      <select name="defaultProvider" id="defaultProvider" class="form-select">
+        <option value="" <%= !settings.defaultProvider ? 'selected' : '' %>>Not set</option>
+        <% providers.forEach(provider => { %>
+        <option value="<%= provider %>" <%= settings.defaultProvider === provider ? 'selected' : '' %>>
+          <%= provider %>
+        </option>
+        <% }) %>
+      </select>
+      <p class="form-help">Default AI provider to use</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="defaultModel">Default Model</label>
+      <select name="defaultModel" id="defaultModel" class="form-select">
+        <option value="" <%= !settings.defaultModel ? 'selected' : '' %>>Not set</option>
+        <% if (settings.defaultProvider && modelsByProvider[settings.defaultProvider]) { %>
+          <% modelsByProvider[settings.defaultProvider].forEach(model => { %>
+          <option value="<%= model.id %>" <%= settings.defaultModel === model.id ? 'selected' : '' %>>
+            <%= model.name || model.id %>
+          </option>
+          <% }) %>
+        <% } %>
+      </select>
+      <p class="form-help">Default model to use from the selected provider</p>
+    </div>
+
+    <div style="display: flex; gap: var(--space-sm);">
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>
+        Save Settings
+      </button>
+    </div>
+  </form>
+</div>
+
+<% if (providers.length > 0) { %>
+<div class="card">
+  <h2 class="card-title">Available Providers</h2>
+  <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm);">
+    <% providers.forEach(provider => { %>
+    <span class="badge badge-default"><%= provider %></span>
+    <% }) %>
+  </div>
+  <p class="form-help" style="margin-top: var(--space-md);">
+    Configure providers in the <a href="/admin/models">Models</a> section.
+  </p>
+</div>
+<% } else { %>
+<div class="card">
+  <h2 class="card-title">No Providers Configured</h2>
+  <p>Configure AI providers in the <a href="/admin/models">Models</a> section first.</p>
+</div>
+<% } %>
+
+<script>
+  // All models by provider (pre-loaded from server)
+  const allModelsByProvider = <%- JSON.stringify(modelsByProvider) %>;
+
+  document.getElementById('settings-form').addEventListener('htmx:afterRequest', (e) => {
+    const xhr = e.detail.xhr;
+    const alertsDiv = document.getElementById('alerts');
+
+    if (xhr.status === 200) {
+      alertsDiv.innerHTML = '<div class="alert alert-success">Settings saved successfully</div>';
+    } else {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        alertsDiv.innerHTML = `<div class="alert alert-error">${data.error || 'Failed to save'}</div>`;
+      } catch {
+        alertsDiv.innerHTML = '<div class="alert alert-error">Failed to save settings</div>';
+      }
+    }
+
+    setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+  });
+
+  // Update models dropdown when provider changes
+  document.getElementById('defaultProvider').addEventListener('change', (e) => {
+    const provider = e.target.value;
+    const modelSelect = document.getElementById('defaultModel');
+
+    modelSelect.innerHTML = '<option value="">Not set</option>';
+
+    if (!provider || !allModelsByProvider[provider]) {
+      return;
+    }
+
+    allModelsByProvider[provider].forEach(model => {
+      const opt = document.createElement('option');
+      opt.value = model.id;
+      opt.textContent = model.name || model.id;
+      modelSelect.appendChild(opt);
+    });
+  });
+</script>

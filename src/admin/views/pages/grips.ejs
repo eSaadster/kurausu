@@ -1,0 +1,143 @@
+<div class="card">
+  <h2 class="card-title">Active Grips</h2>
+
+  <% if (activeGrips && activeGrips.length > 0) { %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Grip</th>
+        <th>Template</th>
+        <th>Session</th>
+        <th>Status</th>
+        <th>Attempts</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% activeGrips.forEach(grip => { %>
+      <tr>
+        <td>
+          <strong><%= grip.id %></strong>
+          <% if (grip.userPrompt) { %>
+          <br><span style="font-size: 0.8em; color: var(--color-text-muted);">
+            "<%= grip.userPrompt.slice(0, 50) %><%= grip.userPrompt.length > 50 ? '...' : '' %>"
+          </span>
+          <% } %>
+        </td>
+        <td><code><%= grip.templateId %></code></td>
+        <td><code><%= grip.session %></code></td>
+        <td>
+          <% if (grip.status === 'active') { %>
+          <span class="badge badge-success">Active</span>
+          <% } else if (grip.status === 'completed') { %>
+          <span class="badge badge-success">Completed</span>
+          <% } else if (grip.status === 'failed' || grip.status === 'timeout') { %>
+          <span class="badge badge-danger"><%= grip.status %></span>
+          <% } else if (grip.status === 'waiting') { %>
+          <span class="badge badge-default">Waiting</span>
+          <% } else { %>
+          <span class="badge badge-default"><%= grip.status %></span>
+          <% } %>
+        </td>
+        <td><%= grip.attempts %></td>
+        <td>
+          <div style="display: flex; gap: var(--space-xs);">
+            <button
+              class="btn btn-sm btn-danger"
+              hx-post="/admin/grips/active/<%= grip.id %>/stop"
+              hx-confirm="Stop grip '<%= grip.id %>'?"
+              hx-swap="none"
+            >Stop</button>
+            <a
+              class="btn btn-sm"
+              href="/admin/grips/active/<%= grip.id %>/logs"
+              target="_blank"
+            >Logs</a>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No active grips.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Templates</h2>
+  <p class="form-help" style="margin-bottom: var(--space-md);">
+    Path: <code><%= templatesPath %></code>
+  </p>
+
+  <% if (templates && templates.length > 0) { %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Template</th>
+        <th>Poll Interval</th>
+        <th>Timeout</th>
+        <th>Max Retries</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% templates.forEach(template => { %>
+      <tr>
+        <td><strong><%= template.id %></strong></td>
+        <td><%= template.config.poll_interval || '10s' %></td>
+        <td><%= template.config.timeout || '30m' %></td>
+        <td><%= template.config.max_retries || '10' %></td>
+        <td>
+          <button
+            class="btn btn-sm btn-primary"
+            hx-post="/admin/grips/start/<%= template.id %>"
+            hx-swap="none"
+          >Start</button>
+        </td>
+      </tr>
+      <% if (template.config.success_pattern) { %>
+      <tr>
+        <td colspan="5" style="padding-left: var(--space-xl); background: var(--color-bg); font-size: 0.875rem;">
+          <strong>Success pattern:</strong> <code>/<%= template.config.success_pattern %>/</code>
+        </td>
+      </tr>
+      <% } %>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p style="color: var(--color-text-muted);">No templates found.</p>
+  <p class="form-help">Create templates in <code>~/klaus/grips/templates/</code> as Markdown files with YAML frontmatter.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="card-title">About Grips</h2>
+  <p>Grips are long-running AI-monitored tasks. They:</p>
+  <ul style="margin-left: var(--space-lg); margin-top: var(--space-sm);">
+    <li>Run commands in tmux sessions</li>
+    <li>Poll output at regular intervals</li>
+    <li>Use AI to decide when tasks are complete or need action</li>
+    <li>Can ask for user input when stuck</li>
+    <li>Archive results when complete</li>
+  </ul>
+</div>
+
+<script>
+  document.querySelectorAll('button[hx-post]').forEach(btn => {
+    btn.addEventListener('htmx:afterRequest', (e) => {
+      const alertsDiv = document.getElementById('alerts');
+      const xhr = e.detail.xhr;
+
+      if (xhr.status === 200) {
+        alertsDiv.innerHTML = '<div class="alert alert-success">Operation successful</div>';
+        setTimeout(() => location.reload(), 500);
+      } else {
+        alertsDiv.innerHTML = '<div class="alert alert-error">Operation failed</div>';
+      }
+
+      setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+    });
+  });
+</script>

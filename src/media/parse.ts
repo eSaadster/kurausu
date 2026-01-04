@@ -1,5 +1,7 @@
 // Shared helpers for parsing MEDIA tokens from command/stdout text.
 
+import path from "node:path";
+
 // Allow optional wrapping backticks and punctuation after the token; capture the core token.
 export const MEDIA_TOKEN_RE = /\bMEDIA:\s*`?([^\n]+)`?/gi;
 
@@ -18,11 +20,19 @@ function isValidMedia(candidate: string) {
   return (
     /^https?:\/\//i.test(candidate) ||
     candidate.startsWith("/") ||
-    candidate.startsWith("./")
+    candidate.startsWith("./") ||
+    /^[a-zA-Z0-9_-]/.test(candidate)
   );
 }
 
-export function splitMediaFromOutput(raw: string): {
+function isAbsoluteOrUrl(candidate: string) {
+  return /^https?:\/\//i.test(candidate) || candidate.startsWith("/");
+}
+
+export function splitMediaFromOutput(
+  raw: string,
+  basePath?: string,
+): {
   text: string;
   mediaUrls?: string[];
   mediaUrl?: string; // legacy first item for backward compatibility
@@ -57,8 +67,14 @@ export function splitMediaFromOutput(raw: string): {
       const parts = payload.split(/\s+/).filter(Boolean);
       const invalidParts: string[] = [];
       for (const part of parts) {
-        const candidate = normalizeMediaSource(cleanCandidate(part));
+        let candidate = normalizeMediaSource(cleanCandidate(part));
         if (isValidMedia(candidate)) {
+          if (basePath && !isAbsoluteOrUrl(candidate)) {
+            if (candidate.startsWith("scratchpad/")) {
+              candidate = candidate.slice("scratchpad/".length);
+            }
+            candidate = path.resolve(basePath, candidate);
+          }
           media.push(candidate);
           hasValidMedia = true;
         } else {

@@ -88,7 +88,7 @@ describe("runCommandReply", () => {
     expect(finalArgv).toContain("--output-format");
     expect(finalArgv).toContain("json");
     expect(finalArgv).toContain("-p");
-    expect(finalArgv.at(-1)).toContain("You are Clawd (Claude)");
+    expect(finalArgv.at(-1)).toContain("You are an AI assistant running via klaus");
   });
 
   it("omits identity prefix on resumed session when sendSystemOnce=true", async () => {
@@ -111,7 +111,7 @@ describe("runCommandReply", () => {
       enqueue: enqueueImmediate,
     });
     const finalArgv = captures[0].argv as string[];
-    expect(finalArgv.at(-1)).not.toContain("You are Clawd (Claude)");
+    expect(finalArgv.at(-1)).not.toContain("You are an AI assistant running via klaus");
   });
 
   it("prepends identity on first turn when sendSystemOnce=true", async () => {
@@ -134,7 +134,7 @@ describe("runCommandReply", () => {
       enqueue: enqueueImmediate,
     });
     const finalArgv = captures[0].argv as string[];
-    expect(finalArgv.at(-1)).toContain("You are Clawd (Claude)");
+    expect(finalArgv.at(-1)).toContain("You are an AI assistant running via klaus");
   });
 
   it("still prepends identity if resume session but systemSent=false", async () => {
@@ -157,7 +157,7 @@ describe("runCommandReply", () => {
       enqueue: enqueueImmediate,
     });
     const finalArgv = captures[0].argv as string[];
-    expect(finalArgv.at(-1)).toContain("You are Clawd (Claude)");
+    expect(finalArgv.at(-1)).toContain("You are an AI assistant running via klaus");
   });
 
   it("picks session resume args when not new", async () => {
@@ -228,7 +228,7 @@ describe("runCommandReply", () => {
   });
 
   it("parses MEDIA tokens and respects mediaMaxMb for local files", async () => {
-    const tmp = path.join(os.tmpdir(), `warelay-test-${Date.now()}.bin`);
+    const tmp = path.join(os.tmpdir(), `klaus-test-${Date.now()}.bin`);
     const bigBuffer = Buffer.alloc(2 * 1024 * 1024, 1);
     await fs.writeFile(tmp, bigBuffer);
     const runner = makeRunner({

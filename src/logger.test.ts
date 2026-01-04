@@ -70,7 +70,7 @@ describe("logger helpers", () => {
 });
 
 function pathForTest() {
-  return path.join(os.tmpdir(), `warelay-log-${crypto.randomUUID()}.log`);
+  return path.join(os.tmpdir(), `klaus-log-${crypto.randomUUID()}.log`);
 }
 
 function cleanup(file: string) {

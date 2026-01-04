@@ -1,0 +1,28 @@
+<div class="status-card">
+  <div class="status-card-value">
+    <span class="status-indicator <%= data.mcpOnline === data.mcpCount ? 'ok' : (data.mcpCount > 0 ? 'error' : 'unknown') %>"></span>
+    <%= data.mcpOnline %>/<%= data.mcpCount %>
+  </div>
+  <div class="status-card-label">MCP Servers</div>
+</div>
+
+<div class="status-card">
+  <div class="status-card-value">
+    <span class="status-indicator <%= data.clicksEnabled > 0 ? 'ok' : 'unknown' %>"></span>
+    <%= data.clicksEnabled %>/<%= data.clicksCount %>
+  </div>
+  <div class="status-card-label">Clicks Active</div>
+</div>
+
+<div class="status-card">
+  <div class="status-card-value">
+    <span class="status-indicator <%= data.gripsActive > 0 ? 'ok' : 'unknown' %>"></span>
+    <%= data.gripsActive %>
+  </div>
+  <div class="status-card-label">Active Grips</div>
+</div>
+
+<div class="status-card">
+  <div class="status-card-value"><%= data.sessionsCount %></div>
+  <div class="status-card-label">Sessions</div>
+</div>

@@ -27,7 +27,7 @@ export async function statusCommand(
   }
 
   if (!hasAuth) {
-    runtime.log("Not authenticated. Run 'warelay login' to link your WhatsApp account.");
+    runtime.log("Not authenticated. Run 'klaus login' to link your WhatsApp account.");
     return;
   }
 

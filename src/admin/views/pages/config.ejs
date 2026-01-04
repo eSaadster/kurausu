@@ -1,0 +1,226 @@
+<div class="card">
+  <h2 class="card-title">Quick Settings</h2>
+
+  <div class="form-group">
+    <label class="form-label" for="quickModel">Default Model (Pi Agent)</label>
+    <select id="quickModel" class="form-select" <% if (readOnly) { %>disabled<% } %>>
+      <option value="">Not set (uses hardcoded default)</option>
+      <% const grouped = {}; allModels.forEach(m => { grouped[m.provider] = grouped[m.provider] || []; grouped[m.provider].push(m); }); %>
+      <% Object.keys(grouped).sort().forEach(provider => { %>
+      <optgroup label="<%= provider %>">
+        <% grouped[provider].forEach(model => { %>
+        <option value="<%= model.id %>" <%= currentModel === model.id ? 'selected' : '' %>>
+          <%= model.name %>
+        </option>
+        <% }) %>
+      </optgroup>
+      <% }) %>
+    </select>
+    <p class="form-help">Model used for Pi Agent conversations. Saved to <code>inbound.reply.piAgentModel</code></p>
+  </div>
+
+  <button type="button" id="applyQuickSettings" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>
+    Apply to Config
+  </button>
+</div>
+
+<div class="card">
+  <h2 class="card-title">klaus.json</h2>
+  <p class="form-help" style="margin-bottom: var(--space-md);">
+    Path: <code><%= configPath %></code>
+  </p>
+
+  <form id="config-form" hx-post="/admin/config" hx-swap="none">
+    <div class="form-group">
+      <label class="form-label">Configuration (JSON5)</label>
+      <textarea
+        name="content"
+        class="form-textarea"
+        style="min-height: 400px; font-family: var(--font-mono);"
+        hx-post="/admin/config/validate"
+        hx-trigger="change delay:500ms, keyup delay:1000ms"
+        hx-target="#validation-result"
+        hx-swap="innerHTML"
+      ><%= rawContent %></textarea>
+    </div>
+
+    <div id="validation-result" style="margin-bottom: var(--space-md);"></div>
+
+    <div style="display: flex; gap: var(--space-sm);">
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>
+        Save Config
+      </button>
+      <button
+        type="button"
+        class="btn"
+        hx-post="/admin/config/backup"
+        hx-swap="none"
+        <% if (readOnly) { %>disabled<% } %>
+      >
+        Create Backup
+      </button>
+    </div>
+  </form>
+</div>
+
+<% if (backups && backups.length > 0) { %>
+<div class="card">
+  <h2 class="card-title">Backups</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Size</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% backups.forEach(backup => { %>
+      <tr>
+        <td><code><%= backup.timestamp %></code></td>
+        <td><%= Math.round(backup.size / 1024) %> KB</td>
+        <td>
+          <button
+            class="btn btn-sm"
+            hx-post="/admin/config/restore/<%= backup.timestamp %>"
+            hx-confirm="Restore this backup? Current config will be backed up first."
+            hx-swap="none"
+            <% if (readOnly) { %>disabled<% } %>
+          >
+            Restore
+          </button>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<div class="card">
+  <h2 class="card-title">Configuration Reference</h2>
+  <details>
+    <summary style="cursor: pointer; margin-bottom: var(--space-md);">View available options</summary>
+    <pre><code>{
+  "logging": {
+    "level": "info",  // silent | fatal | error | warn | info | debug | trace
+    "file": "/tmp/klaus/klaus.log"
+  },
+  "groupChat": {
+    "enabled": true,
+    "requireMention": true,
+    "mentionPatterns": ["@?klaus"],
+    "historyLimit": 50
+  },
+  "grips": {
+    "templatesPath": "~/klaus/grips/templates",
+    "activePath": "~/klaus/grips/active",
+    "archivePath": "~/klaus/grips/archive",
+    "pollIntervalSeconds": 10,
+    "maxConcurrent": 3,
+    "sleepless": {
+      "enabled": false,
+      "cliPath": "sle",
+      "pollIntervalMs": 10000
+    }
+  },
+  "inbound": {
+    "allowFrom": ["17206598123"],
+    "transcribeAudio": {
+      "command": ["whisper", "{{MediaPath}}"],
+      "timeoutSeconds": 60
+    },
+    "reply": {
+      "mode": "pi-agent",  // text | command | pi-agent
+      "piAgentModel": "claude-haiku-4-5-20251001",
+      "piAgentThinkingLevel": "off",  // off | minimal | low | medium | high
+      "timeoutSeconds": 600,
+      "session": {
+        "scope": "per-sender",  // per-sender | global
+        "resetTriggers": ["/new"],
+        "idleMinutes": 60
+      }
+    }
+  },
+  "web": {
+    "heartbeatSeconds": 300,
+    "reconnect": {
+      "initialMs": 1000,
+      "maxMs": 30000,
+      "factor": 2,
+      "jitter": 0.1,
+      "maxAttempts": 0  // 0 = unlimited
+    }
+  }
+}</code></pre>
+  </details>
+</div>
+
+<script>
+  // Handle form submission response
+  document.getElementById('config-form').addEventListener('htmx:afterRequest', (e) => {
+    const xhr = e.detail.xhr;
+    const alertsDiv = document.getElementById('alerts');
+
+    if (xhr.status === 200) {
+      alertsDiv.innerHTML = '<div class="alert alert-success">Config saved successfully</div>';
+    } else {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        let msg = data.error || 'Failed to save config';
+        if (data.errors) {
+          msg += ': ' + data.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+        }
+        alertsDiv.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+      } catch {
+        alertsDiv.innerHTML = '<div class="alert alert-error">Failed to save config</div>';
+      }
+    }
+
+    // Auto-dismiss
+    setTimeout(() => {
+      alertsDiv.innerHTML = '';
+    }, 5000);
+  });
+
+  // Quick Settings: Apply model to config JSON
+  document.getElementById('applyQuickSettings').addEventListener('click', () => {
+    const modelId = document.getElementById('quickModel').value;
+    const textarea = document.querySelector('textarea[name="content"]');
+    const alertsDiv = document.getElementById('alerts');
+
+    try {
+      // Parse current config (try JSON5-compatible parsing)
+      let config;
+      try {
+        config = JSON.parse(textarea.value);
+      } catch {
+        // If strict JSON fails, try eval-based parsing for JSON5 comments
+        // For safety, we'll just show an error
+        alertsDiv.innerHTML = '<div class="alert alert-error">Please fix JSON syntax before applying quick settings</div>';
+        setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+        return;
+      }
+
+      // Ensure inbound.reply structure exists
+      config.inbound = config.inbound || {};
+      config.inbound.reply = config.inbound.reply || {};
+
+      // Set or remove piAgentModel
+      if (modelId) {
+        config.inbound.reply.piAgentModel = modelId;
+      } else {
+        delete config.inbound.reply.piAgentModel;
+      }
+
+      // Update textarea with formatted JSON
+      textarea.value = JSON.stringify(config, null, 2);
+
+      alertsDiv.innerHTML = '<div class="alert alert-success">Model applied to config. Click "Save Config" to persist.</div>';
+      setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+    } catch (err) {
+      alertsDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+      setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+    }
+  });
+</script>

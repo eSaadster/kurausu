@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "klaus-admin": {
+      "baseUrl": "http://127.0.0.1:8085/admin/mcp"
+    },
+    "twitter": {
+      "baseUrl": "https://backend.composio.dev/v3/mcp/<mcp-id>/mcp?user_id=<user-id>",
+      "headers": {
+        "x-api-key": "${COMPOSIO_API_KEY}"
+      }
+    },
+    "reddit": {
+      "baseUrl": "https://backend.composio.dev/v3/mcp/<mcp-id>/mcp?user_id=<user-id>",
+      "headers": {
+        "x-api-key": "${COMPOSIO_API_KEY}"
+      }
+    },
+    "esaadster-twitter": {
+      "baseUrl": "https://backend.composio.dev/v3/mcp/<mcp-id>/mcp?user_id=<user-id>",
+      "headers": {
+        "x-api-key": "${COMPOSIO_API_KEY}"
+      }
+    }
+  }
+}

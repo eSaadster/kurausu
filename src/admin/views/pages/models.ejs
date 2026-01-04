@@ -1,0 +1,125 @@
+<div class="card">
+  <h2 class="card-title">AI Model Providers</h2>
+  <p class="form-help" style="margin-bottom: var(--space-md);">
+    Path: <code><%= modelsPath %></code>
+  </p>
+
+  <form id="models-form" hx-post="/admin/models" hx-swap="none">
+    <div class="form-group">
+      <label class="form-label">Configuration (JSON)</label>
+      <textarea
+        name="content"
+        class="form-textarea"
+        style="min-height: 400px; font-family: var(--font-mono);"
+      ><%= rawContent %></textarea>
+    </div>
+
+    <div style="display: flex; gap: var(--space-sm);">
+      <button type="submit" class="btn btn-primary" <% if (readOnly) { %>disabled<% } %>>
+        Save Models Config
+      </button>
+    </div>
+  </form>
+</div>
+
+<% if (models && models.providers && Object.keys(models.providers).length > 0) { %>
+<div class="card">
+  <h2 class="card-title">Configured Providers</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Base URL</th>
+        <th>API Type</th>
+        <th>Models</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% Object.entries(models.providers).forEach(([name, provider]) => { %>
+      <tr>
+        <td><strong><%= name %></strong></td>
+        <td><code style="font-size: 0.8em;"><%= provider.baseUrl %></code></td>
+        <td><%= provider.api %></td>
+        <td><%= provider.models ? provider.models.length : 0 %></td>
+      </tr>
+      <% if (provider.models && provider.models.length > 0) { %>
+      <tr>
+        <td colspan="4" style="padding-left: var(--space-xl); background: var(--color-bg);">
+          <% provider.models.forEach(model => { %>
+          <span class="badge badge-default" style="margin-right: var(--space-xs); margin-bottom: var(--space-xs);">
+            <%= model.id %>
+            <% if (model.reasoning) { %> (reasoning)<% } %>
+          </span>
+          <% }) %>
+        </td>
+      </tr>
+      <% } %>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<div class="card">
+  <h2 class="card-title">Configuration Reference</h2>
+  <details>
+    <summary style="cursor: pointer; margin-bottom: var(--space-md);">View example provider configuration</summary>
+    <pre><code>{
+  "providers": {
+    "gemini-proxy": {
+      "baseUrl": "http://localhost:3100/v1",
+      "apiKey": "GEMINI_API_KEY",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "gemini-3-pro-preview",
+          "name": "Gemini 3 Pro",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 1000000,
+          "maxTokens": 65536
+        }
+      ]
+    },
+    "openrouter": {
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKey": "${OPENROUTER_API_KEY}",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "mistralai/devstral-2501",
+          "name": "Devstral",
+          "input": ["text"],
+          "contextWindow": 128000
+        }
+      ]
+    }
+  }
+}</code></pre>
+  </details>
+</div>
+
+<script>
+  document.getElementById('models-form').addEventListener('htmx:afterRequest', (e) => {
+    const xhr = e.detail.xhr;
+    const alertsDiv = document.getElementById('alerts');
+
+    if (xhr.status === 200) {
+      alertsDiv.innerHTML = '<div class="alert alert-success">Models config saved successfully</div>';
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        let msg = data.error || 'Failed to save';
+        if (data.errors) {
+          msg += ': ' + data.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+        }
+        alertsDiv.innerHTML = `<div class="alert alert-error">${msg}</div>`;
+      } catch {
+        alertsDiv.innerHTML = '<div class="alert alert-error">Failed to save models config</div>';
+      }
+    }
+
+    setTimeout(() => { alertsDiv.innerHTML = ''; }, 5000);
+  });
+</script>

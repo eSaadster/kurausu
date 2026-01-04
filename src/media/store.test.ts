@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const realOs = await vi.importActual<typeof import("node:os")>("node:os");
-const HOME = path.join(realOs.tmpdir(), "warelay-home-test");
+const HOME = path.join(realOs.tmpdir(), "klaus-home-test");
 
 vi.mock("node:os", () => ({
   default: { homedir: () => HOME },
@@ -24,7 +24,7 @@ describe("media store", () => {
 
   it("creates and returns media directory", async () => {
     const dir = await store.ensureMediaDir();
-    expect(dir).toContain("warelay-home-test");
+    expect(dir).toContain("klaus-home-test");
     const stat = await fs.stat(dir);
     expect(stat.isDirectory()).toBe(true);
   });

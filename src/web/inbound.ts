@@ -75,6 +75,22 @@ export async function monitorWebInbox(options: {
   const selfE164 = selfJid ? jidToE164(selfJid) : null;
   const seen = new Set<string>();
 
+  // Serialize socket sends to avoid concurrent Signal session mutations.
+  let sendLock: Promise<void> = Promise.resolve();
+  const withSendLock = async <T>(fn: () => Promise<T>): Promise<T> => {
+    const prev = sendLock;
+    let resolve: () => void;
+    sendLock = new Promise((r) => {
+      resolve = r;
+    });
+    await prev;
+    try {
+      return await fn();
+    } finally {
+      resolve!();
+    }
+  };
+
   sock.ev.on("messages.upsert", async (upsert) => {
     if (upsert.type !== "notify") return;
 
@@ -151,7 +167,7 @@ export async function monitorWebInbox(options: {
       };
 
       const reply = async (text: string) => {
-        await sock.sendMessage(chatJid, { text });
+        await withSendLock(() => sock.sendMessage(chatJid, { text }));
       };
 
       const sendMedia = async (payload: MediaPayload) => {
@@ -185,7 +201,7 @@ export async function monitorWebInbox(options: {
           };
         }
 
-        await sock.sendMessage(chatJid, content);
+        await withSendLock(() => sock.sendMessage(chatJid, content));
       };
 
       const timestamp = msg.messageTimestamp
@@ -260,6 +276,15 @@ export async function monitorWebInbox(options: {
       }
     },
     onClose,
+    sendMessage: async (to: string, text: string) => {
+      const jid = to.includes("@")
+        ? to
+        : `${to.replace(/^\+/, "")}@s.whatsapp.net`;
+      logVerbose(`📤 Sending via existing socket -> ${jid}`);
+      const result = await withSendLock(() => sock.sendMessage(jid, { text }));
+      logVerbose(`✅ Sent via existing socket. ID: ${result?.key?.id}`);
+      return result;
+    },
   } as const;
 }
 

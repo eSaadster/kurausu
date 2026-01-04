@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
 
-const SESSION = "warelay-relay";
+const SESSION = "klaus-relay";
 
 export async function spawnRelayTmux(
-  cmd = "pnpm warelay relay --verbose",
+  cmd = "pnpm klaus relay --verbose",
   attach = true,
   restart = true,
 ) {

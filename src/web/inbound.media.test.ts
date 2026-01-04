@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const HOME = path.join(
   os.tmpdir(),
-  `warelay-inbound-media-${crypto.randomUUID()}`,
+  `klaus-inbound-media-${crypto.randomUUID()}`,
 );
 process.env.HOME = HOME;
 
